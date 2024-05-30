@@ -1,6 +1,5 @@
 package org.katrin;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -11,24 +10,36 @@ import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
+import java.net.URL;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 public class GUI extends JFrame {
-    private final JLabel editLabel;
-    private final JButton downloadButton;
-    private final JButton nextButton;
+
+    private JLabel editLabel;
+    private JButton downloadButton;
+    private JButton signInButton;
+    private JButton signUpButton;
+    private JButton nextButton;
     private final Font customFont1 = new Font("Verdana", Font.PLAIN, 12);
     private JList<String> attributeList;
     private DefaultListModel<String> listModel;
+    private final Color darkBlue = new Color(24, 31, 84);
+    private final Color yellow = new Color(254, 253, 223);
+    private final Color lightBlue =new Color(241, 247, 254);
 
     // Множество для отслеживания выбранных атрибутов
     private final Set<String> selectedAttributesSet = new HashSet<>();
     GridBagConstraints gbc = new GridBagConstraints();
     ArrayList<Integer> selectedIndexes = new ArrayList<>();
+    Font customFont = new Font("Courier New", Font.BOLD, 15);
+
+    String userName = "postgres";
+    String password = "230218";
+    String connectionUrl = "jdbc:postgresql://localhost:5432/course_project";
+
 
     public GUI() {
         setTitle("Composition Converter");
@@ -36,18 +47,27 @@ public class GUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridBagLayout());
 
-        try {
-            Image icon = ImageIO.read(Objects.requireNonNull(getClass().getResource("icon.png")));
-            if (icon != null) {
-                setIconImage(icon);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Image icon = ImageIO.read(Objects.requireNonNull(getClass().getResource("icon.png")));
+//            if (icon != null) {
+//                setIconImage(icon);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
-        getContentPane().setBackground(new Color(241, 247, 254));
-        GridBagConstraints gbc = new GridBagConstraints();
+        getContentPane().setBackground(lightBlue);
 
+        userRegistration();
+
+
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    public void userRegistration(){
         JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -55,16 +75,246 @@ public class GUI extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         add(title, gbc);
 
-        Font customFont = new Font("Courier New", Font.BOLD, 15);
+
         title.setFont(customFont);
-        title.setForeground(new Color(24, 31, 84));
+        title.setForeground(darkBlue);
 
-        JLabel label = new JLabel("Download your file from the library:");
+        JLabel chooseOption = new JLabel("Authorization");
         gbc.gridy = 1;
-        add(label, gbc);
+        add(chooseOption, gbc);
 
-        label.setFont(customFont1);
-        label.setForeground(new Color(24, 31, 84));
+        chooseOption.setFont(customFont1);
+        chooseOption.setForeground(darkBlue);
+
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        signInButton = new JButton("Sign In");
+        gbc.gridx = 0;
+        signInButton.setPreferredSize(new Dimension(180, 25));
+        add(signInButton, gbc);
+
+        signInButton.setBackground(Color.WHITE);
+        signInButton.setForeground(darkBlue);
+        signInButton.setFont(customFont1);
+
+        signUpButton = new JButton("Sign Up");
+        gbc.gridx = 2;
+        signUpButton.setPreferredSize(new Dimension(180, 25));
+        add(signUpButton, gbc);
+
+        signUpButton.setBackground(Color.WHITE);
+        signUpButton.setForeground(darkBlue);
+        signUpButton.setFont(customFont1);
+
+        signUpButton.addActionListener(e -> {
+            clearWindow();
+            setSize(450, 250);
+            JLabel label = new JLabel("---Registration---");
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 4;
+            gbc.insets = new Insets(10, 50, 10, 50);
+            add(label, gbc);
+
+            label.setFont(customFont);
+            label.setForeground(darkBlue);
+
+
+            JLabel fullNameLabel = new JLabel("Full name:");
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.gridwidth = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(fullNameLabel, gbc);
+
+            fullNameLabel.setFont(customFont1);
+            fullNameLabel.setForeground(darkBlue);
+
+            JTextField fullNameText = new JTextField(20);
+            gbc.gridx = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(fullNameText, gbc);
+
+
+            JLabel phoneNumberLabel = new JLabel("Phone number:");
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(phoneNumberLabel, gbc);
+
+            phoneNumberLabel.setFont(customFont1);
+            phoneNumberLabel.setForeground(darkBlue);
+
+            JTextField phoneNumberText = new JTextField(20);
+            gbc.gridx = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(phoneNumberText, gbc);
+
+
+            JLabel passwordLabel = new JLabel("Password:");
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(passwordLabel, gbc);
+
+            passwordLabel.setFont(customFont1);
+            passwordLabel.setForeground(darkBlue);
+
+            JTextField passwordText = new JTextField(20);
+            gbc.gridx = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(passwordText, gbc);
+
+
+            gbc.gridy = 4;
+            gbc.gridwidth = 4;
+            JButton submitButton = new JButton("Submit");
+            gbc.gridx = 0;
+            submitButton.setPreferredSize(new Dimension(180, 25));
+            add(submitButton, gbc);
+
+            submitButton.setBackground(Color.WHITE);
+            submitButton.setForeground(darkBlue);
+            submitButton.setFont(customFont1);
+
+            submitButton.addActionListener(ev -> {
+
+                String full_name = fullNameText.getText();
+                String contact_data = phoneNumberText.getText();
+                String user_password = passwordText.getText();
+
+                if (full_name.isEmpty() || contact_data.isEmpty() || user_password.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "All fields are required!", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                String s = "INSERT INTO client (full_name, contact_data, user_password) VALUES (?, ?, ?)";
+
+                try (Connection connection = DriverManager.getConnection(connectionUrl, userName, password);
+                     PreparedStatement statement = connection.prepareStatement(s)) {
+
+                    statement.setString(1, full_name);
+                    statement.setString(2, contact_data);
+                    statement.setString(3, user_password);
+
+                    int rowsAffected = statement.executeUpdate();
+                    if (rowsAffected > 0) {
+                        System.out.println("Пользователь успешно добавлен в базу данных.");
+                    }
+                    downloadFile();
+                } catch (SQLException ex) {
+                    System.err.println("Ошибка при добавлении пользователя в базу данных:");
+                    ex.printStackTrace();
+                }
+            });
+        });
+
+        signInButton.addActionListener(e -> {
+            clearWindow();
+            setSize(450, 220);
+            JLabel label = new JLabel("---Sign In---");
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 4;
+            gbc.insets = new Insets(10, 50, 10, 50);
+            add(label, gbc);
+
+            label.setFont(customFont);
+            label.setForeground(darkBlue);
+
+
+            JLabel phoneNumberLabel = new JLabel("Phone number:");
+            gbc.gridy = 1;
+            gbc.gridwidth = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(phoneNumberLabel, gbc);
+
+            phoneNumberLabel.setFont(customFont1);
+            phoneNumberLabel.setForeground(darkBlue);
+
+            JTextField phoneNumberText = new JTextField(20);
+            gbc.gridx = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(phoneNumberText, gbc);
+
+
+            JLabel passwordLabel = new JLabel("Password:");
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(passwordLabel, gbc);
+
+            passwordLabel.setFont(customFont1);
+            passwordLabel.setForeground(darkBlue);
+
+            JTextField passwordText = new JTextField(20);
+            gbc.gridx = 2;
+            gbc.insets = new Insets(10, 46, 10, 10);
+            add(passwordText, gbc);
+
+
+            gbc.gridy = 3;
+            gbc.gridwidth = 4;
+            JButton submitButton = new JButton("Submit");
+            gbc.gridx = 0;
+            submitButton.setPreferredSize(new Dimension(180, 25));
+            add(submitButton, gbc);
+
+            submitButton.setBackground(Color.WHITE);
+            submitButton.setForeground(darkBlue);
+            submitButton.setFont(customFont1);
+
+            submitButton.addActionListener(ev -> {
+                String contact_data = phoneNumberText.getText();
+                String user_password = passwordText.getText();
+
+                String s = "SELECT * FROM client WHERE contact_data = ? AND user_password = ?";
+
+                try (Connection connection = DriverManager.getConnection(connectionUrl, userName, password);
+                     PreparedStatement statement = connection.prepareStatement(s)) {
+
+                    statement.setString(1, contact_data);
+                    statement.setString(2, user_password);
+
+                    ResultSet r = statement.executeQuery();
+                    if (r.next()) {
+                        System.out.println("Пользователь успешно найден в базе данных.");
+                        System.out.println("Имя: " + r.getString("full_name"));
+                    } else {
+                        System.out.println("Пользователь не найден.");
+                    }
+                    downloadFile();
+
+                } catch (SQLException ex) {
+                    System.err.println("Ошибка при поиске пользователя в базе данных:");
+                    ex.printStackTrace();
+                }
+            });
+        });
+
+    }
+
+    public void downloadFile(){
+        clearWindow();
+        setSize(450, 220);
+        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 4;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        add(title, gbc);
+
+
+        title.setFont(customFont);
+        title.setForeground(darkBlue);
+
+        JLabel downloadFile = new JLabel("Download your file from the library:");
+        gbc.gridy = 1;
+        add(downloadFile, gbc);
+
+        downloadFile.setFont(customFont1);
+        downloadFile.setForeground(darkBlue);
 
         downloadButton = new JButton("Download");
         gbc.gridy = 2;
@@ -72,7 +322,7 @@ public class GUI extends JFrame {
         add(downloadButton, gbc);
 
         downloadButton.setBackground(Color.WHITE);
-        downloadButton.setForeground(new Color(24, 31, 84));
+        downloadButton.setForeground(darkBlue);
         downloadButton.setFont(customFont1);
 
         // Добавление обработчика на кнопку
@@ -113,8 +363,8 @@ public class GUI extends JFrame {
 
         // Створення списку зберігання вибраних номерів чекбоксов
         nextButton = new JButton("Continue");
-        nextButton.setBackground(new Color(254, 253, 223));
-        nextButton.setForeground(new Color(24, 31, 84));
+        nextButton.setBackground(yellow);
+        nextButton.setForeground(darkBlue);
 
         editLabel = new JLabel();
 
@@ -126,7 +376,7 @@ public class GUI extends JFrame {
             resultTextArea.setWrapStyleWord(true);
             JScrollPane scrollPane1 = new JScrollPane(resultTextArea);
             scrollPane1.setPreferredSize(new Dimension(500, 300));
-            resultTextArea.setBackground(new Color(254, 253, 223));
+            resultTextArea.setBackground(yellow);
 
             int option2 = JOptionPane.showOptionDialog(
                     this,
@@ -143,10 +393,8 @@ public class GUI extends JFrame {
             }
         });
 
-        pack();
-        setLocationRelativeTo(null);
-        setVisible(true);
     }
+
 
     private void addAdditionalComponents() {
         JLabel label = new JLabel("Outer class:");
@@ -157,7 +405,7 @@ public class GUI extends JFrame {
         add(label, gbc);
 
         label.setFont(customFont1);
-        label.setForeground(new Color(24, 31, 84));
+        label.setForeground(darkBlue);
 
         JTextField externalClass = new JTextField(15);
         gbc.gridx = 2;
@@ -171,7 +419,7 @@ public class GUI extends JFrame {
         add(label1, gbc);
 
         label1.setFont(customFont1);
-        label1.setForeground(new Color(24, 31, 84));
+        label1.setForeground(darkBlue);
 
         JLabel name = new JLabel(Regular.className);
         gbc.gridx = 2;
@@ -280,7 +528,7 @@ public class GUI extends JFrame {
         JScrollPane scrollPane = new JScrollPane(resultTextArea);
 
         scrollPane.setPreferredSize(new Dimension(500, 300));
-        resultTextArea.setBackground(new Color(254, 253, 223));
+        resultTextArea.setBackground(yellow);
 
         // Відображення інформації у діалоговому вікні
         int option = JOptionPane.showOptionDialog(
