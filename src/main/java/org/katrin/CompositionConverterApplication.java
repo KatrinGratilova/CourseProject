@@ -1,8 +1,8 @@
 package org.katrin;
 
+import org.katrin.Model.Client;
 import org.katrin.Model.InitialInnerClass;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -13,8 +13,8 @@ import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
 
@@ -28,13 +28,11 @@ public class CompositionConverterApplication extends JFrame {
     private final GridBagConstraints gbc = new GridBagConstraints();
     private final ArrayList<Integer> selectedIndexes = new ArrayList<>();
 
-
     private final Font customFont1 = new Font("Verdana", Font.PLAIN, 12);
     private final Font customFont = new Font("Courier New", Font.BOLD, 15);
     private final Color darkBlue = new Color(24, 31, 84);
     private final Color yellow = new Color(254, 253, 223);
     private final Color lightBlue = new Color(241, 247, 254);
-
 
     private final Connection connection = ConnectionSingleton.getConnection();
     CompositionConverterRepository repository = new CompositionConverterRepository(connection);
@@ -52,6 +50,8 @@ public class CompositionConverterApplication extends JFrame {
     private int currentIndex = 0;
     private JTextArea classDetailsArea;
     int selectedClassIndex;
+    int accessType = 1;
+    boolean isAccess = false;
 
     public CompositionConverterApplication() {
         setTitle("Composition Converter");
@@ -69,7 +69,6 @@ public class CompositionConverterApplication extends JFrame {
 //            System.err.println("Failed to load icon image.");
 //        }
 
-
         getContentPane().setBackground(lightBlue);
         userAuthorization();
 
@@ -79,16 +78,10 @@ public class CompositionConverterApplication extends JFrame {
     }
 
     public void userAuthorization() {
-        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(title, gbc);
-        title.setFont(customFont);
-        title.setForeground(darkBlue);
+        writeTitle();
 
         JLabel chooseOption = new JLabel("Авторизація");
+        gbc.gridx = 0;
         gbc.gridy = 1;
         add(chooseOption, gbc);
         chooseOption.setFont(customFont1);
@@ -125,18 +118,14 @@ public class CompositionConverterApplication extends JFrame {
         gbc.gridwidth = 4;
         gbc.insets = new Insets(10, 50, 10, 50);
         add(label, gbc);
-
         label.setFont(customFont);
         label.setForeground(darkBlue);
 
-
         JLabel fullNameLabel = new JLabel("ПІБ:");
-        gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(10, 46, 10, 10);
         add(fullNameLabel, gbc);
-
         fullNameLabel.setFont(customFont1);
         fullNameLabel.setForeground(darkBlue);
 
@@ -145,14 +134,11 @@ public class CompositionConverterApplication extends JFrame {
         gbc.insets = new Insets(10, 46, 10, 10);
         add(fullNameText, gbc);
 
-
         JLabel phoneNumberLabel = new JLabel("Номер телефону:");
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 2;
         gbc.insets = new Insets(10, 46, 10, 10);
         add(phoneNumberLabel, gbc);
-
         phoneNumberLabel.setFont(customFont1);
         phoneNumberLabel.setForeground(darkBlue);
 
@@ -161,13 +147,11 @@ public class CompositionConverterApplication extends JFrame {
         gbc.insets = new Insets(10, 46, 10, 10);
         add(phoneNumberText, gbc);
 
-
         JLabel passwordLabel = new JLabel("Пароль:");
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.insets = new Insets(10, 46, 10, 10);
         add(passwordLabel, gbc);
-
         passwordLabel.setFont(customFont1);
         passwordLabel.setForeground(darkBlue);
 
@@ -182,31 +166,34 @@ public class CompositionConverterApplication extends JFrame {
         gbc.gridx = 0;
         submitButton.setPreferredSize(new Dimension(180, 25));
         add(submitButton, gbc);
-
         submitButton.setBackground(Color.WHITE);
         submitButton.setForeground(darkBlue);
         submitButton.setFont(customFont1);
 
         submitButton.addActionListener(ev -> {
-
             String full_name = fullNameText.getText();
             String contact_data = phoneNumberText.getText();
             String user_password = passwordText.getText();
+
+            Client newClient = Client.builder()
+                    .fullName(fullNameText.getText())
+                    .contactData(phoneNumberText.getText())
+                    .password(passwordText.getText())
+                    .build();
 
             if (full_name.isEmpty() || contact_data.isEmpty() || user_password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Необхідно заповнити всі поля!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            repository.addClient(full_name, contact_data, user_password);
+            repository.addClient(newClient);
             choosePurchaseType();
         });
-
     }
 
     public void userSignIn() {
         clearWindow();
         setSize(450, 220);
-        JLabel label = new JLabel("--- Вхід---");
+        JLabel label = new JLabel("--- Вхід ---");
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 4;
@@ -243,8 +230,8 @@ public class CompositionConverterApplication extends JFrame {
 
         gbc.gridy = 3;
         gbc.gridwidth = 4;
-        JButton submitButton = new JButton("Підтвердити");
         gbc.gridx = 0;
+        JButton submitButton = new JButton("Підтвердити");
         submitButton.setPreferredSize(new Dimension(180, 25));
         add(submitButton, gbc);
 
@@ -260,9 +247,7 @@ public class CompositionConverterApplication extends JFrame {
                 JOptionPane.showMessageDialog(this, "Необхідно заповнити всі поля!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
             boolean isFound = repository.findClient(contact_data, user_password, this);
-
             if (isFound) choosePurchaseType();
         });
     }
@@ -270,30 +255,20 @@ public class CompositionConverterApplication extends JFrame {
     public void choosePurchaseType() {
         clearWindow();
         setSize(450, 220);
-        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(title, gbc);
-
-        title.setFont(customFont);
-        title.setForeground(darkBlue);
+        writeTitle();
 
         JLabel chooseOption = new JLabel("Чи є в вас внутрішній клас для композиції?");
+        gbc.gridx = 0;
         gbc.gridy = 1;
         add(chooseOption, gbc);
-
         chooseOption.setFont(customFont1);
         chooseOption.setForeground(darkBlue);
 
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         JButton hasInnerButton = new JButton("Так");
-        gbc.gridx = 0;
         hasInnerButton.setPreferredSize(new Dimension(180, 25));
         add(hasInnerButton, gbc);
-
         hasInnerButton.setBackground(Color.WHITE);
         hasInnerButton.setForeground(darkBlue);
         hasInnerButton.setFont(customFont1);
@@ -314,81 +289,22 @@ public class CompositionConverterApplication extends JFrame {
         convertedInnerClassCode = Analysis.analyzePattern(selectedIndexes, editLabel);
         outerClassName = outerClassNameField.getText();
 
-        String s;
+        //confirmAccess();
+
         int outerClassId = 0;
-        int initialInnerClassId = 0;
-        if (!outerClassName.isEmpty() && outerClassCode != null) {
-            s = "INSERT INTO outer_class (name, source_id, code) VALUES (?, 1, ?)";
-            try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        int initialInnerClassId;
 
-                statement.setString(1, outerClassName);
-                statement.setString(2, outerClassCode);
+        if (!outerClassName.isEmpty() && outerClassCode != null)
+            outerClassId = repository.addOuterClassWithNameAndCode(outerClassName, outerClassCode);
+        else if (!outerClassName.isEmpty())
+            outerClassId = repository.addOuterClassWithName(outerClassName);
 
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows > 0) {
-                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                        if (generatedKeys.next()) outerClassId = generatedKeys.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при вставке внешнего класса:");
-                System.exit(1);
-            }
-        } else if (!outerClassName.isEmpty()) {
-            s = "INSERT INTO outer_class (name, source_id) VALUES (?, 1)";
-            try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        if (outerClassId != 0)
+            initialInnerClassId = repository.addInitialInnerClassWithOuter(innerClassName, outerClassId, initialInnerClassCode);
+        else
+            initialInnerClassId = repository.addInitialInnerClassWithoutOuter(innerClassName, initialInnerClassCode);
 
-                statement.setString(1, outerClassName);
-
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows > 0) {
-                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                        if (generatedKeys.next()) outerClassId = generatedKeys.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при вставке внешнего класса:");
-                System.exit(1);
-            }
-        }
-
-        if (outerClassId != 0) {
-            s = "INSERT INTO initial_inner_class (name, source_id, outer_class_id, code) VALUES (?, 1, ?, ?)";
-            try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
-
-                statement.setString(1, innerClassName);
-                statement.setInt(2, outerClassId);
-                statement.setString(3, initialInnerClassCode);
-
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows > 0) {
-                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                        if (generatedKeys.next()) initialInnerClassId = generatedKeys.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при вставке внутеннего класса:");
-                System.exit(1);
-            }
-        } else {
-            s = "INSERT INTO initial_inner_class (name, source_id, code) VALUES (?, 1, ?)";
-            try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
-
-                statement.setString(1, innerClassName);
-                statement.setString(2, initialInnerClassCode);
-
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows > 0) {
-                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                        if (generatedKeys.next()) initialInnerClassId = generatedKeys.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при вставке внутеннего класса:");
-                System.exit(1);
-            }
-        }
-        repository.addConvertedInnerClass(innerClassName, 1, initialInnerClassId, convertedInnerClassCode);
+        repository.addConvertedInnerClass(innerClassName, accessType, initialInnerClassId, convertedInnerClassCode);
         orderExecution(convertedInnerClassCode);
     }
 
@@ -396,72 +312,73 @@ public class CompositionConverterApplication extends JFrame {
         convertedInnerClassCode = Analysis.analyzePattern(selectedIndexes, editLabel);
         outerClassName = outerClassNameField.getText();
 
-        String s;
-        int outerClassId = 0;
+        int outerClassId;
         int initialInnerClassId = 0;
         if (!outerClassName.isEmpty() && outerClassCode != null) {
-            s = "INSERT INTO outer_class (name, source_id, code) VALUES (?, 1, ?)";
-            try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            outerClassId = repository.addOuterClassWithNameAndCode(outerClassName, outerClassCode);
 
-                statement.setString(1, outerClassName);
-                statement.setString(2, outerClassCode);
-
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows > 0) {
-                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                        if (generatedKeys.next()) outerClassId = generatedKeys.getInt(1);
-                    }
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при вставке внешнего класса:");
-                System.exit(1);
-            }
-            if (outerClassId != 0) {
-                s = "INSERT INTO initial_inner_class (name, source_id, outer_class_id, code) VALUES (?, 1, ?, ?)";
-                try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
-
-                    statement.setString(1, innerClassName);
-                    statement.setInt(2, outerClassId);
-                    statement.setString(3, initialInnerClassCode);
-
-                    int affectedRows = statement.executeUpdate();
-                    if (affectedRows > 0) {
-                        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                            if (generatedKeys.next()) initialInnerClassId = generatedKeys.getInt(1);
-                        }
-                    }
-                } catch (SQLException ex) {
-                    System.err.println("Ошибка при вставке внутеннего класса:");
-                    System.exit(1);
-                }
-            }
+            if (outerClassId != 0)
+                initialInnerClassId = repository.addInitialInnerClassWithOuter(innerClassName, outerClassId, initialInnerClassCode);
         }
 
-
         if (initialInnerClassId != 0)
-            repository.addConvertedInnerClass(innerClassName, 1, initialInnerClassId, convertedInnerClassCode);
-        else repository.addConvertedInnerClass(innerClassName, 1, selectedClassIndex, convertedInnerClassCode);
+            repository.addConvertedInnerClass(innerClassName, accessType, initialInnerClassId, convertedInnerClassCode);
+        else repository.addConvertedInnerClass(innerClassName, accessType, selectedClassIndex, convertedInnerClassCode);
         orderExecution(convertedInnerClassCode);
+    }
+
+    public void confirmAccess() {
+        clearWindow();
+        setSize(450, 220);
+        writeTitle();
+
+        JLabel chooseOption = new JLabel("Чи дозволяєте ви нам використовувати свій конвертований клас?");
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        add(chooseOption, gbc);
+        chooseOption.setFont(customFont1);
+        chooseOption.setForeground(darkBlue);
+
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        JButton hasInnerButton = new JButton("Так");
+        hasInnerButton.setPreferredSize(new Dimension(180, 25));
+        add(hasInnerButton, gbc);
+        hasInnerButton.setBackground(Color.WHITE);
+        hasInnerButton.setForeground(darkBlue);
+        hasInnerButton.setFont(customFont1);
+
+        JButton noInnerButton = new JButton("Ні");
+        gbc.gridx = 2;
+        noInnerButton.setPreferredSize(new Dimension(180, 25));
+        add(noInnerButton, gbc);
+        noInnerButton.setBackground(Color.WHITE);
+        noInnerButton.setForeground(darkBlue);
+        noInnerButton.setFont(customFont1);
+
+        hasInnerButton.addActionListener(e -> {
+            accessType = 1;
+            isAccess = true;
+        });
+
+        noInnerButton.addActionListener(e -> {
+            accessType = 2;
+            isAccess = true;
+        });
     }
 
     public void hasInner() {
         clearWindow();
         setSize(450, 220);
-        JLabel label = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 50, 10, 50);
-        add(label, gbc);
-        label.setFont(customFont);
-        label.setForeground(darkBlue);
+        writeTitle();
 
         JLabel downloadFile = new JLabel("Завантажте файл з бібліотеки:");
+        gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.gridwidth = 4;
         add(downloadFile, gbc);
         downloadFile.setFont(customFont1);
         downloadFile.setForeground(darkBlue);
-
 
         gbc.gridy = 2;
         JButton downloadInnerClassButton = new JButton("Завантажити");
@@ -491,7 +408,6 @@ public class CompositionConverterApplication extends JFrame {
                         content.append(line).append("\n");
                     }
                     reader.close();
-
                     initialInnerClassCode = content.toString();
                     userClassParsed = Regular.showPattern(initialInnerClassCode);
 
@@ -514,49 +430,13 @@ public class CompositionConverterApplication extends JFrame {
         });
     }
 
-    public void downloadOuterFile() {
-        // Создание объекта JFileChooser
-        JFileChooser fileChooser = new JFileChooser();
-        // Открываем диалог выбора файла
-        int result = fileChooser.showOpenDialog(CompositionConverterApplication.this);
-
-        // Проверка, был ли выбран файл
-        if (result == JFileChooser.APPROVE_OPTION) {
-            // Получаем выбранный файл
-            File selectedFile = fileChooser.getSelectedFile();
-            try {
-                // Читаем содержимое файла
-                BufferedReader reader = new BufferedReader(new FileReader(selectedFile));
-                StringBuilder content = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    content.append(line).append("\n");
-                }
-                reader.close();
-
-                outerClassCode = content.toString();
-
-                downloadButton.setEnabled(false);
-
-            } catch (Exception ex) {
-                System.exit(1);
-            }
-        }
-    }
-
     public void noInner() {
         clearWindow();
         setSize(4550, 220);
-        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 50, 10, 50);
-        add(title, gbc);
-        title.setFont(customFont);
-        title.setForeground(darkBlue);
+        writeTitle();
 
         JLabel innerClassNameLabel = new JLabel("Назва внутрішнього класу:");
+        gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(10, 46, 10, 10);
@@ -581,58 +461,46 @@ public class CompositionConverterApplication extends JFrame {
             searchForInnerClass();
         });
 
-        continueButton.setBackground(yellow);
-        continueButton.setForeground(darkBlue);
-
-        continueButton.addActionListener(e -> convertingClassWhenNoInner());
-
         gbc.gridy = 9;
         add(submitButton, gbc);
         revalidate();
         pack();
     }
 
+    public void downloadOuterFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(CompositionConverterApplication.this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(selectedFile));
+                StringBuilder content = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+                reader.close();
+
+                outerClassCode = content.toString();
+                downloadButton.setEnabled(false);
+            } catch (Exception ex) {
+                System.exit(1);
+            }
+        }
+    }
+
     public void searchForInnerClass() {
         innerClassName = innerClassNameField.getText();
         outerClassName = outerClassNameField.getText();
-        String s;
-        int classNumbers = 0;
-        if (outerClassName.isEmpty()) {
-            s = "SELECT initial_inner_class_id, name, outer_class_id, code FROM initial_inner_class WHERE name = ?;";
-            try (PreparedStatement statement = connection.prepareStatement(s)) {
-                statement.setString(1, innerClassName);
-                ResultSet classes = statement.executeQuery();
-                while (classes.next()) {
-                    InitialInnerClass innerClass = InitialInnerClass.builder().id(classes.getInt(1)).name(classes.getString(2)).outerClassId(classes.getInt(3)).code(classes.getString(4)).build();
-                    initialInnerClasses.add(innerClass);
-                    classNumbers++;
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при поиске внутреннего класса: " + ex.getMessage());
-            }
-        } else {
-            s = """
-                    SELECT initial_inner_class_id, iic.name, iic.outer_class_id, iic.code
-                    FROM initial_inner_class iic
-                    JOIN outer_class oc
-                    ON  iic.outer_class_id = oc.outer_class_id
-                    WHERE iic.name = ? AND oc.name = ?;
-                    """;
-            try (PreparedStatement statement = connection.prepareStatement(s)) {
-                statement.setString(1, innerClassName);
-                statement.setString(2, outerClassName);
-                ResultSet classes = statement.executeQuery();
-                while (classes.next()) {
-                    InitialInnerClass innerClass = InitialInnerClass.builder().id(classes.getInt(1)).name(classes.getString(2)).outerClassId(classes.getInt(3)).code(classes.getString(4)).build();
-                    initialInnerClasses.add(innerClass);
-                    classNumbers++;
-                }
-            } catch (SQLException ex) {
-                System.err.println("Ошибка при поиске внутреннего класса: " + ex.getMessage());
-            }
-        }
 
-        if (classNumbers == 0) {
+        int classNumber;
+        if (outerClassName.isEmpty())
+            classNumber = repository.findInitialInnerClassByName(innerClassName, initialInnerClasses);
+        else
+            classNumber = repository.findInitialInnerClassByOuter(innerClassName, outerClassName, initialInnerClasses);
+
+        if (classNumber == 0) {
             JOptionPane.showMessageDialog(null, "Класи не знайдені.");
         } else {
             innerClassSelection();
@@ -697,7 +565,6 @@ public class CompositionConverterApplication extends JFrame {
         nextButton.setForeground(darkBlue);
         nextButton.setFont(customFont1);
         gbc.gridx = 2;
-
         add(nextButton, gbc);
 
         JButton selectButton = new JButton("Обрати");
@@ -706,12 +573,10 @@ public class CompositionConverterApplication extends JFrame {
         selectButton.setBackground(yellow);
         selectButton.setForeground(darkBlue);
         selectButton.setFont(customFont1);
-
         gbc.gridwidth = 4;
         gbc.gridy = 4;
         gbc.gridx = 1;
         add(selectButton, gbc);
-
 
         nextButton.addActionListener(e -> {
             currentIndex = (currentIndex + 1) % initialInnerClasses.size();
@@ -729,14 +594,15 @@ public class CompositionConverterApplication extends JFrame {
 
             addAdditionalComponents();
             gbc.gridy++;
-            add(continueButton, gbc);
+            continueButton.setBackground(yellow);
+            continueButton.setForeground(darkBlue);
 
+            continueButton.addActionListener(e1 -> convertingClassWhenNoInner());
+            add(continueButton, gbc);
 
             selectedClassIndex = selectedClass.getId();  // Сохранение индекса выбранного класса
             System.out.println("Selected class index in DB: " + selectedClassIndex);  // Проверка, что индекс сохранен правильно
         });
-
-
     }
 
     private void outerClassInput(int y) {
@@ -782,25 +648,16 @@ public class CompositionConverterApplication extends JFrame {
         downloadButton.setForeground(darkBlue);
         downloadButton.setFont(customFont1);
 
-        // Добавление обработчика на кнопку
         downloadButton.addActionListener(el -> downloadOuterFile());
     }
 
     private void addAdditionalComponents() {
         clearWindow();
         setSize(470, 430);
+        writeTitle();
 
-        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(title, gbc);
-        title.setFont(customFont);
-        title.setForeground(darkBlue);
-
-        gbc.gridwidth = 2;
         JLabel label1 = new JLabel("Внутрішній клас:");
+        gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.insets = new Insets(10, 50, 10, 10);
@@ -880,12 +737,9 @@ public class CompositionConverterApplication extends JFrame {
                 }
             }
         });
-
-
     }
 
     public void orderExecution(String convertedInnerClassCode) {
-
         JTextArea resultTextArea = new JTextArea(convertedInnerClassCode);
         resultTextArea.setLineWrap(true);
         resultTextArea.setWrapStyleWord(true);
@@ -898,8 +752,6 @@ public class CompositionConverterApplication extends JFrame {
         if (option2 == JOptionPane.OK_OPTION) {
             System.exit(0);
         }
-
-
     }
 
     private static class DisabledItemRenderer extends DefaultListCellRenderer {
@@ -938,14 +790,22 @@ public class CompositionConverterApplication extends JFrame {
     }
 
     private void clearWindow() {
-        // Удаление всех компонентов из контента окна
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
         getContentPane().removeAll();
-
-        // Перерасчет компонентов
         revalidate();
         repaint();
+    }
+
+    private void writeTitle() {
+        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 4;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        add(title, gbc);
+        title.setFont(customFont);
+        title.setForeground(darkBlue);
     }
 
     public static void main(String[] args) {
