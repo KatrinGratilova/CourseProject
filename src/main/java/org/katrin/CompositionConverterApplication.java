@@ -464,14 +464,15 @@ public class CompositionConverterApplication extends JFrame {
 
 
         gbc.gridy = 2;
-        downloadButton.setPreferredSize(new Dimension(180, 25));
-        add(downloadButton, gbc);
-        downloadButton.setBackground(Color.WHITE);
-        downloadButton.setForeground(darkBlue);
-        downloadButton.setFont(customFont1);
+        JButton downloadInnerClassButton = new JButton("Завантажити");
+        downloadInnerClassButton.setPreferredSize(new Dimension(180, 25));
+        add(downloadInnerClassButton, gbc);
+        downloadInnerClassButton.setBackground(Color.WHITE);
+        downloadInnerClassButton.setForeground(darkBlue);
+        downloadInnerClassButton.setFont(customFont1);
 
         // Добавление обработчика на кнопку
-        downloadButton.addActionListener(el -> {
+        downloadInnerClassButton.addActionListener(el -> {
             // Создание объекта JFileChooser
             JFileChooser fileChooser = new JFileChooser();
             // Открываем диалог выбора файла
@@ -494,7 +495,7 @@ public class CompositionConverterApplication extends JFrame {
                     initialInnerClassCode = content.toString();
                     userClassParsed = Regular.showPattern(initialInnerClassCode);
 
-                    downloadButton.setEnabled(false);
+                    downloadInnerClassButton.setEnabled(false);
                     showResultDialog(userClassParsed);
                     addAdditionalComponents(); // Додавання додаткових компонентів
 
@@ -503,7 +504,6 @@ public class CompositionConverterApplication extends JFrame {
                     continueButton.setBackground(yellow);
                     continueButton.setForeground(darkBlue);
                     continueButton.addActionListener((ActionEvent e) -> convertingClassWhenHasInner());
-
 
                     gbc.gridy = 9;
                     add(continueButton, gbc);
