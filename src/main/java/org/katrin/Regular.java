@@ -24,7 +24,7 @@ public class Regular {
         Matcher mt = pt.matcher(classText);
 
         while (mt.find()) {
-            className = mt.group(2);
+            CompositionConverterApplication.innerClassName = className = mt.group(2);
         }
         
         result.append("АТРИБУТИ:\n");
