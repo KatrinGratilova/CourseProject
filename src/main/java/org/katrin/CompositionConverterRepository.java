@@ -2,12 +2,10 @@ package org.katrin;
 
 import org.katrin.Model.Client;
 import org.katrin.Model.InitialInnerClass;
+import org.katrin.Model.Purchase;
 
 import javax.swing.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 
 public class CompositionConverterRepository {
@@ -17,7 +15,8 @@ public class CompositionConverterRepository {
         this.connection = connection;
     }
 
-    public void addClient(Client client) {
+    public int addClient(Client client) {
+        int clientId = 0;
         String s = "INSERT INTO client (full_name, contact_data, user_password) VALUES (?, ?, ?)";
 
         try (PreparedStatement statement = connection.prepareStatement(s)) {
@@ -28,15 +27,18 @@ public class CompositionConverterRepository {
 
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("Пользователь успешно добавлен в базу данных.");
+                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) clientId = generatedKeys.getInt(1);
+                }
             }
         } catch (SQLException ex) {
             System.err.println("Ошибка при добавлении пользователя в базу данных:");
             System.exit(1);
         }
+        return clientId;
     }
 
-    public boolean findClient(String contact_data, String user_password, CompositionConverterApplication appl) {
+    public Client findClient(String contact_data, String user_password, CompositionConverterApplication appl) {
         String s = "SELECT * FROM client WHERE contact_data = ? AND user_password = ?";
 
         try (PreparedStatement statement = connection.prepareStatement(s)) {
@@ -47,22 +49,26 @@ public class CompositionConverterRepository {
             ResultSet r = statement.executeQuery();
             if (!r.next()) {
                 JOptionPane.showMessageDialog(appl, "Такого користувача не існує. Спробуйте ще раз.", "Error", JOptionPane.ERROR_MESSAGE);
-                return false;
+                return null;
             } else
-                return true;
+                return Client
+                        .builder()
+                        .id(r.getInt(1))
+                        .fullName(r.getString(2))
+                        .build();
 
         } catch (SQLException ex) {
             System.err.println("Ошибка при поиске пользователя в базе данных:");
-
         }
-        return false;
+        return null;
     }
 
 
-    public void addConvertedInnerClass(String name, int access_type_id, int initial_inner_class_id, String code) {
+    public int addConvertedInnerClass(String name, int access_type_id, int initial_inner_class_id, String code) {
+        int convertedClassId = 0;
         String s = "INSERT INTO converted_inner_class (name, access_type_id, initial_inner_class_id, code) VALUES (?, ?, ?, ?)";
 
-        try (PreparedStatement statement = connection.prepareStatement(s)) {
+        try (PreparedStatement statement = connection.prepareStatement(s, Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, name);
             statement.setInt(2, access_type_id);
@@ -71,13 +77,16 @@ public class CompositionConverterRepository {
 
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("Пользователь успешно добавлен в базу данных.");
+                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) convertedClassId = generatedKeys.getInt(1);
+                }
             }
         } catch (SQLException ex) {
             System.err.println("Ошибка при добавлении пользователя в базу данных:" + ex.getMessage());
             ex.printStackTrace();
 
         }
+        return convertedClassId;
     }
 
     public int addOuterClassWithNameAndCode(String outerClassName, String outerClassCode) {
@@ -221,6 +230,24 @@ public class CompositionConverterRepository {
             System.err.println("Ошибка при поиске внутреннего класса: " + ex.getMessage());
         }
         return classNumber;
+    }
+
+    public void addPurchase(Purchase purchase){
+        String s;
+        s = "INSERT INTO purchase (client_id, converted_inner_class_id, price, checkout_date) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
+
+            statement.setInt(1, purchase.getClientId());
+            statement.setInt(2, purchase.getConvertedInnerClassId());
+            statement.setDouble(3, 100);
+            statement.setDate(4, Date.valueOf(purchase.getCheckoutDate().toLocalDate()));
+
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            System.err.println("Ошибка при вставке внутеннего класса:" + ex.getMessage());
+            ex.printStackTrace();
+            System.exit(1);
+        }
     }
 
 

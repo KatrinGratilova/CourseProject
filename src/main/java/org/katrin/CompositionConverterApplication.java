@@ -2,6 +2,7 @@ package org.katrin;
 
 import org.katrin.Model.Client;
 import org.katrin.Model.InitialInnerClass;
+import org.katrin.Model.Purchase;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,7 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.sql.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 
@@ -30,6 +31,8 @@ public class CompositionConverterApplication extends JFrame {
 
     private final Font customFont1 = new Font("Verdana", Font.PLAIN, 12);
     private final Font customFont = new Font("Courier New", Font.BOLD, 15);
+    private final Font customFont2 = new Font("Verdana", Font.ITALIC, 13);
+    private final Font customFont3 = new Font("Dialog", Font.BOLD, 12);
     private final Color darkBlue = new Color(24, 31, 84);
     private final Color yellow = new Color(254, 253, 223);
     private final Color lightBlue = new Color(241, 247, 254);
@@ -52,6 +55,10 @@ public class CompositionConverterApplication extends JFrame {
     int selectedClassIndex;
     int accessType = 1;
     boolean isAccess = false;
+    int convertedClassId = 0;
+
+    LocalDateTime checkoutDate;
+    Client client;
 
     public CompositionConverterApplication() {
         setTitle("Composition Converter");
@@ -79,13 +86,7 @@ public class CompositionConverterApplication extends JFrame {
 
     public void userAuthorization() {
         writeTitle();
-
-        JLabel chooseOption = new JLabel("Авторизація");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        add(chooseOption, gbc);
-        chooseOption.setFont(customFont1);
-        chooseOption.setForeground(darkBlue);
+        writeLabel("Авторизація", 0, 1, 4, 10, 10, customFont, darkBlue);
 
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -112,48 +113,23 @@ public class CompositionConverterApplication extends JFrame {
     public void userSignUp() {
         clearWindow();
         setSize(450, 250);
-        JLabel label = new JLabel("--- Реєстрація ---");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 50, 10, 50);
-        add(label, gbc);
-        label.setFont(customFont);
-        label.setForeground(darkBlue);
 
-        JLabel fullNameLabel = new JLabel("ПІБ:");
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(fullNameLabel, gbc);
-        fullNameLabel.setFont(customFont1);
-        fullNameLabel.setForeground(darkBlue);
+        writeLabel("--- Реєстрація ---", 0, 0, 4, 50, 50, customFont, darkBlue);
+        writeLabel("ПІБ:", 0, 1, 2, 46, 10, customFont1, darkBlue);
 
         JTextField fullNameText = new JTextField(20);
         gbc.gridx = 2;
         gbc.insets = new Insets(10, 46, 10, 10);
         add(fullNameText, gbc);
 
-        JLabel phoneNumberLabel = new JLabel("Номер телефону:");
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(phoneNumberLabel, gbc);
-        phoneNumberLabel.setFont(customFont1);
-        phoneNumberLabel.setForeground(darkBlue);
+        writeLabel("Номер телефону:", 0, 2, 2, 46, 10, customFont1, darkBlue);
 
         JTextField phoneNumberText = new JTextField(20);
         gbc.gridx = 2;
         gbc.insets = new Insets(10, 46, 10, 10);
         add(phoneNumberText, gbc);
 
-        JLabel passwordLabel = new JLabel("Пароль:");
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(passwordLabel, gbc);
-        passwordLabel.setFont(customFont1);
-        passwordLabel.setForeground(darkBlue);
+        writeLabel("Пароль:", 0, 3, 2, 46, 10, customFont1, darkBlue);
 
         JTextField passwordText = new JTextField(20);
         gbc.gridx = 2;
@@ -175,7 +151,7 @@ public class CompositionConverterApplication extends JFrame {
             String contact_data = phoneNumberText.getText();
             String user_password = passwordText.getText();
 
-            Client newClient = Client.builder()
+            client = Client.builder()
                     .fullName(fullNameText.getText())
                     .contactData(phoneNumberText.getText())
                     .password(passwordText.getText())
@@ -185,7 +161,8 @@ public class CompositionConverterApplication extends JFrame {
                 JOptionPane.showMessageDialog(this, "Необхідно заповнити всі поля!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            repository.addClient(newClient);
+            int clientId = repository.addClient(client);
+            client.builder().id(clientId).build();
             choosePurchaseType();
         });
     }
@@ -193,35 +170,15 @@ public class CompositionConverterApplication extends JFrame {
     public void userSignIn() {
         clearWindow();
         setSize(450, 220);
-        JLabel label = new JLabel("--- Вхід ---");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 50, 10, 50);
-        add(label, gbc);
-        label.setFont(customFont);
-        label.setForeground(darkBlue);
-
-        JLabel phoneNumberLabel = new JLabel("Номер телефону:");
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(phoneNumberLabel, gbc);
-        phoneNumberLabel.setFont(customFont1);
-        phoneNumberLabel.setForeground(darkBlue);
+        writeLabel("--- Вхід ---", 0, 0, 4, 50, 50, customFont, darkBlue);
+        writeLabel("Номер телефону:", 0, 1, 2, 46, 10, customFont1, darkBlue);
 
         JTextField phoneNumberText = new JTextField(20);
         gbc.gridx = 2;
         gbc.insets = new Insets(10, 46, 10, 10);
         add(phoneNumberText, gbc);
 
-        JLabel passwordLabel = new JLabel("Пароль:");
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(passwordLabel, gbc);
-        passwordLabel.setFont(customFont1);
-        passwordLabel.setForeground(darkBlue);
+        writeLabel("Пароль:", 0, 2, 2, 46, 10, customFont1, darkBlue);
 
         JTextField passwordText = new JTextField(20);
         gbc.gridx = 2;
@@ -234,7 +191,6 @@ public class CompositionConverterApplication extends JFrame {
         JButton submitButton = new JButton("Підтвердити");
         submitButton.setPreferredSize(new Dimension(180, 25));
         add(submitButton, gbc);
-
         submitButton.setBackground(Color.WHITE);
         submitButton.setForeground(darkBlue);
         submitButton.setFont(customFont1);
@@ -247,8 +203,8 @@ public class CompositionConverterApplication extends JFrame {
                 JOptionPane.showMessageDialog(this, "Необхідно заповнити всі поля!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            boolean isFound = repository.findClient(contact_data, user_password, this);
-            if (isFound) choosePurchaseType();
+            client = repository.findClient(contact_data, user_password, this);
+            if (client != null) choosePurchaseType();
         });
     }
 
@@ -256,13 +212,7 @@ public class CompositionConverterApplication extends JFrame {
         clearWindow();
         setSize(450, 220);
         writeTitle();
-
-        JLabel chooseOption = new JLabel("Чи є в вас внутрішній клас для композиції?");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        add(chooseOption, gbc);
-        chooseOption.setFont(customFont1);
-        chooseOption.setForeground(darkBlue);
+        writeLabel("Чи є в вас внутрішній клас для композиції?", 0, 1, 4, 10, 10, customFont1, darkBlue);
 
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -304,7 +254,7 @@ public class CompositionConverterApplication extends JFrame {
         else
             initialInnerClassId = repository.addInitialInnerClassWithoutOuter(innerClassName, initialInnerClassCode);
 
-        repository.addConvertedInnerClass(innerClassName, accessType, initialInnerClassId, convertedInnerClassCode);
+        convertedClassId = repository.addConvertedInnerClass(innerClassName, accessType, initialInnerClassId, convertedInnerClassCode);
         orderExecution(convertedInnerClassCode);
     }
 
@@ -316,14 +266,14 @@ public class CompositionConverterApplication extends JFrame {
         int initialInnerClassId = 0;
         if (!outerClassName.isEmpty() && outerClassCode != null) {
             outerClassId = repository.addOuterClassWithNameAndCode(outerClassName, outerClassCode);
-
             if (outerClassId != 0)
                 initialInnerClassId = repository.addInitialInnerClassWithOuter(innerClassName, outerClassId, initialInnerClassCode);
         }
 
         if (initialInnerClassId != 0)
-            repository.addConvertedInnerClass(innerClassName, accessType, initialInnerClassId, convertedInnerClassCode);
-        else repository.addConvertedInnerClass(innerClassName, accessType, selectedClassIndex, convertedInnerClassCode);
+            convertedClassId = repository.addConvertedInnerClass(innerClassName, accessType, initialInnerClassId, convertedInnerClassCode);
+        else
+            convertedClassId = repository.addConvertedInnerClass(innerClassName, accessType, selectedClassIndex, convertedInnerClassCode);
         orderExecution(convertedInnerClassCode);
     }
 
@@ -331,13 +281,7 @@ public class CompositionConverterApplication extends JFrame {
         clearWindow();
         setSize(450, 220);
         writeTitle();
-
-        JLabel chooseOption = new JLabel("Чи дозволяєте ви нам використовувати свій конвертований клас?");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        add(chooseOption, gbc);
-        chooseOption.setFont(customFont1);
-        chooseOption.setForeground(darkBlue);
+        writeLabel("Чи дозволяєте ви нам використовувати свій конвертований клас?", 0, 1, 4, 10, 10, customFont1, darkBlue);
 
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -371,14 +315,7 @@ public class CompositionConverterApplication extends JFrame {
         clearWindow();
         setSize(450, 220);
         writeTitle();
-
-        JLabel downloadFile = new JLabel("Завантажте файл з бібліотеки:");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 4;
-        add(downloadFile, gbc);
-        downloadFile.setFont(customFont1);
-        downloadFile.setForeground(darkBlue);
+        writeLabel("Завантажте файл з бібліотеки:", 0, 1, 4, 10, 10, customFont1, darkBlue);
 
         gbc.gridy = 2;
         JButton downloadInnerClassButton = new JButton("Завантажити");
@@ -434,15 +371,7 @@ public class CompositionConverterApplication extends JFrame {
         clearWindow();
         setSize(4550, 220);
         writeTitle();
-
-        JLabel innerClassNameLabel = new JLabel("Назва внутрішнього класу:");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(innerClassNameLabel, gbc);
-        innerClassNameLabel.setFont(customFont1);
-        innerClassNameLabel.setForeground(darkBlue);
+        writeLabel("Назва внутрішнього класу:", 0, 1, 2, 46, 10, customFont1, darkBlue);
 
         innerClassNameField = new JTextField(15);
         gbc.gridx = 2;
@@ -517,33 +446,17 @@ public class CompositionConverterApplication extends JFrame {
     private void innerClassSelection() {
         clearWindow();
         setSize(560, 580);
-        JLabel title = new JLabel("---- CREATE YOUR COMPOSITION CLASS ----");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 50, 10, 50);
-        add(title, gbc);
-        title.setFont(customFont);
-        title.setForeground(darkBlue);
-
-        JLabel label = new JLabel("Було знайдено наступні класи. Оберіть один серед запропонованих.");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(label, gbc);
-        label.setFont(customFont1);
-        label.setForeground(darkBlue);
+        writeTitle();
+        writeLabel("Було знайдено наступні класи. Оберіть один серед запропонованих.", 0, 1, 4, 10, 10, customFont1, darkBlue);
 
         classDetailsArea = new JTextArea(20, 50);
         classDetailsArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(classDetailsArea);
-
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
         add(scrollPane, gbc);
-        showCurrentClass();
 
+        showCurrentClass();
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
 
@@ -601,29 +514,13 @@ public class CompositionConverterApplication extends JFrame {
             add(continueButton, gbc);
 
             selectedClassIndex = selectedClass.getId();  // Сохранение индекса выбранного класса
-            System.out.println("Selected class index in DB: " + selectedClassIndex);  // Проверка, что индекс сохранен правильно
         });
     }
 
     private void outerClassInput(int y) {
         setSize(470, 570);
-        JLabel label = new JLabel("Ви можете ввести назву зовнішнього класу, або назву та код.");
-        gbc.gridwidth = 4;
-        gbc.gridx = 0;
-        gbc.gridy = y + 1;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(label, gbc);
-        label.setFont(customFont1);
-        label.setForeground(darkBlue);
-
-        JLabel label3 = new JLabel("Назва зовнішнього класу:");
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(10, 46, 10, 10);
-        add(label3, gbc);
-        label3.setFont(customFont1);
-        label3.setForeground(darkBlue);
+        writeLabel("Ви можете ввести назву зовнішнього класу, або назву та код.", 0, y + 1, 4, 10, 10, customFont1, darkBlue);
+        writeLabel("Назва зовнішнього класу:", 0, 6, 2, 46, 10, customFont1, darkBlue);
 
         outerClassNameField = new JTextField(15);
         gbc.gridx = 2;
@@ -632,14 +529,7 @@ public class CompositionConverterApplication extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 50);
         add(outerClassNameField, gbc);
 
-        JLabel label4 = new JLabel("Код зовнішнього класу: (Не обов'язково)");
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(label4, gbc);
-        label4.setFont(customFont1);
-        label4.setForeground(darkBlue);
+        writeLabel("Код зовнішнього класу: (Не обов'язково)", 0, 7, 4, 10, 10, customFont1, darkBlue);
 
         gbc.gridy = 8;
         downloadButton.setPreferredSize(new Dimension(180, 25));
@@ -655,27 +545,9 @@ public class CompositionConverterApplication extends JFrame {
         clearWindow();
         setSize(470, 430);
         writeTitle();
-
-        JLabel label1 = new JLabel("Внутрішній клас:");
-        gbc.gridwidth = 2;
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.insets = new Insets(10, 50, 10, 10);
-        add(label1, gbc);
-        label1.setFont(customFont1);
-        label1.setForeground(darkBlue);
-
-        JLabel name = new JLabel(Regular.className);
-        gbc.gridx = 2;
-        gbc.insets = new Insets(10, 10, 10, 150);
-        add(name, gbc);
-
-        JLabel label2 = new JLabel("Оберіть корисні атрибути зі списку, які хочете зберегти:");
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 4;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        add(label2, gbc);
+        writeLabel("Внутрішній клас:", 0, 1, 2, 50, 10, customFont1, darkBlue);
+        writeLabel(Regular.className, 2, 1, 2, 10, 150, customFont3, Color.black);
+        writeLabel("Оберіть корисні атрибути зі списку, які хочете зберегти:", 0, 2, 4, 10, 10, customFont3, Color.black);
 
         // Настройка модели списка
         listModel = new DefaultListModel<>();
@@ -692,8 +564,6 @@ public class CompositionConverterApplication extends JFrame {
         JScrollPane scrollPane = new JScrollPane(attributeList);
         scrollPane.setPreferredSize(new Dimension(350, 150));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
-        // Добавление JScrollPane на форму
         gbc.gridy = 3;
         add(scrollPane, gbc);
 
@@ -740,18 +610,39 @@ public class CompositionConverterApplication extends JFrame {
     }
 
     public void orderExecution(String convertedInnerClassCode) {
+        clearWindow();
+        setSize(540, 600);
+        writeTitle();
+
+        checkoutDate = LocalDateTime.now();
+
+        Purchase purchase = Purchase.builder()
+                .clientId(client.getId())
+                .convertedInnerClassId(convertedClassId)
+                .checkoutDate(checkoutDate)
+                .build();
+        repository.addPurchase(purchase);
+
+        writeLabel("Інформація про замовлення", 0, 1, 4, 10, 10, customFont2, darkBlue);
+        writeLabel("ПІБ замовника:", 0, 2, 2, 50, 10, customFont3, Color.black);
+        writeLabel(client.getFullName(), 2, 2, 2, 10, 10, customFont1, darkBlue);
+        writeLabel("Дата та час видачі замовлення:", 0, 3, 2, 10, 50, customFont3, Color.black);
+        writeLabel(purchase.getCheckoutDate().toString(), 2, 3, 2, 10, 10, customFont1, darkBlue);
+        writeLabel("Ваш конвертований внутрішній клас для композиції:", 0, 4, 4, 10, 10, customFont1, darkBlue);
+
         JTextArea resultTextArea = new JTextArea(convertedInnerClassCode);
         resultTextArea.setLineWrap(true);
         resultTextArea.setWrapStyleWord(true);
         JScrollPane scrollPane1 = new JScrollPane(resultTextArea);
-        scrollPane1.setPreferredSize(new Dimension(500, 300));
+        scrollPane1.setPreferredSize(new Dimension(500, 350));
         resultTextArea.setBackground(yellow);
 
-        int option2 = JOptionPane.showOptionDialog(this, scrollPane1, "Composition Converter", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{"OK"}, "OK");
-
-        if (option2 == JOptionPane.OK_OPTION) {
-            System.exit(0);
-        }
+        gbc.gridy = 5;
+        gbc.gridheight = 3;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(scrollPane1, gbc);
     }
 
     private static class DisabledItemRenderer extends DefaultListCellRenderer {
@@ -806,6 +697,17 @@ public class CompositionConverterApplication extends JFrame {
         add(title, gbc);
         title.setFont(customFont);
         title.setForeground(darkBlue);
+    }
+
+    private void writeLabel(String text, int x, int y, int width, int left, int right, Font customFont, Color color) {
+        JLabel label1 = new JLabel(text);
+        gbc.gridwidth = width;
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.insets = new Insets(10, left, 10, right);
+        add(label1, gbc);
+        label1.setFont(customFont);
+        label1.setForeground(color);
     }
 
     public static void main(String[] args) {
