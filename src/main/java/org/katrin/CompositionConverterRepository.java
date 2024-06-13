@@ -18,8 +18,7 @@ public class CompositionConverterRepository {
     public int addClient(Client client) {
         int clientId = 0;
         String s = "INSERT INTO client (full_name, contact_data, user_password) VALUES (?, ?, ?)";
-
-        try (PreparedStatement statement = connection.prepareStatement(s)) {
+        try (PreparedStatement statement = connection.prepareStatement(s, Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, client.getFullName());
             statement.setString(2, client.getContactData());
@@ -32,7 +31,7 @@ public class CompositionConverterRepository {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при добавлении пользователя в базу данных:");
+            System.err.println("Помилка при додаванні користувача в базу даних: :");
             System.exit(1);
         }
         return clientId;
@@ -58,16 +57,14 @@ public class CompositionConverterRepository {
                         .build();
 
         } catch (SQLException ex) {
-            System.err.println("Ошибка при поиске пользователя в базе данных:");
+            System.err.println("Помилка при пошуку користувача в базі даних: " + ex.getMessage());
         }
         return null;
     }
 
-
     public int addConvertedInnerClass(String name, int access_type_id, int initial_inner_class_id, String code) {
         int convertedClassId = 0;
         String s = "INSERT INTO converted_inner_class (name, access_type_id, initial_inner_class_id, code) VALUES (?, ?, ?, ?)";
-
         try (PreparedStatement statement = connection.prepareStatement(s, Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, name);
@@ -82,18 +79,14 @@ public class CompositionConverterRepository {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при добавлении пользователя в базу данных:" + ex.getMessage());
-            ex.printStackTrace();
-
+            System.err.println("Помилка при додаванні конвертованого класу в базу даних: " + ex.getMessage());
         }
         return convertedClassId;
     }
 
     public int addOuterClassWithNameAndCode(String outerClassName, String outerClassCode) {
-        String s;
         int outerClassId = 0;
-
-        s = "INSERT INTO outer_class (name, source_id, code) VALUES (?, 1, ?)";
+        String s = "INSERT INTO outer_class (name, source_id, code) VALUES (?, 1, ?)";
         try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, outerClassName);
@@ -106,17 +99,15 @@ public class CompositionConverterRepository {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при вставке внешнего класса:");
+            System.err.println("Помилка при додаванні зовнішнього класу в базу даних: " + ex.getMessage());
             System.exit(1);
         }
         return outerClassId;
     }
 
     public int addOuterClassWithName(String outerClassName) {
-        String s;
         int outerClassId = 0;
-
-        s = "INSERT INTO outer_class (name, source_id) VALUES (?, 1)";
+        String s = "INSERT INTO outer_class (name, source_id) VALUES (?, 1)";
         try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, outerClassName);
@@ -128,16 +119,15 @@ public class CompositionConverterRepository {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при вставке внешнего класса:");
+            System.err.println("Помилка при додаванні зовнішнього класу в базу даних: " + ex.getMessage());
             System.exit(1);
         }
         return outerClassId;
     }
 
     public int addInitialInnerClassWithOuter(String innerClassName, int outerClassId, String initialInnerClassCode) {
-        String s;
         int initialInnerClassId = 0;
-        s = "INSERT INTO initial_inner_class (name, source_id, outer_class_id, code) VALUES (?, 1, ?, ?)";
+        String s = "INSERT INTO initial_inner_class (name, source_id, outer_class_id, code) VALUES (?, 1, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, innerClassName);
@@ -151,16 +141,15 @@ public class CompositionConverterRepository {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при вставке внутеннего класса:");
+            System.err.println("Помилка при додаванні початкового внутрішнього класу в базу даних: " + ex.getMessage());
             System.exit(1);
         }
         return initialInnerClassId;
     }
 
     public int addInitialInnerClassWithoutOuter(String innerClassName, String initialInnerClassCode) {
-        String s;
         int initialInnerClassId = 0;
-        s = "INSERT INTO initial_inner_class (name, source_id, code) VALUES (?, 1, ?)";
+        String s = "INSERT INTO initial_inner_class (name, source_id, code) VALUES (?, 1, ?)";
         try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, innerClassName);
@@ -173,7 +162,7 @@ public class CompositionConverterRepository {
                 }
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при вставке внутеннего класса:");
+            System.err.println("Помилка при додаванні початкового внутрішнього класу в базу даних: " + ex.getMessage());
             System.exit(1);
         }
         return initialInnerClassId;
@@ -181,7 +170,6 @@ public class CompositionConverterRepository {
 
     public int findInitialInnerClassByName(String innerClassName, List<InitialInnerClass> initialInnerClasses) {
         int classNumber = 0;
-
         String s = "SELECT initial_inner_class_id, name, outer_class_id, code FROM initial_inner_class WHERE name = ?;";
         try (PreparedStatement statement = connection.prepareStatement(s)) {
             statement.setString(1, innerClassName);
@@ -197,7 +185,7 @@ public class CompositionConverterRepository {
                 classNumber++;
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при поиске внутреннего класса: " + ex.getMessage());
+            System.err.println("Помилка при пошуку початкового внутрішнього класу в базі даних: " + ex.getMessage());
         }
         return classNumber;
     }
@@ -227,14 +215,13 @@ public class CompositionConverterRepository {
                 classNumber++;
             }
         } catch (SQLException ex) {
-            System.err.println("Ошибка при поиске внутреннего класса: " + ex.getMessage());
+            System.err.println("Помилка при пошуку початкового внутрішнього класу в базі даних: " + ex.getMessage());
         }
         return classNumber;
     }
 
     public void addPurchase(Purchase purchase){
-        String s;
-        s = "INSERT INTO purchase (client_id, converted_inner_class_id, price, checkout_date) VALUES (?, ?, ?, ?)";
+        String s = "INSERT INTO purchase (client_id, converted_inner_class_id, price, checkout_date) VALUES (?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(s, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             statement.setInt(1, purchase.getClientId());
@@ -244,11 +231,7 @@ public class CompositionConverterRepository {
 
             statement.executeUpdate();
         } catch (SQLException ex) {
-            System.err.println("Ошибка при вставке внутеннего класса:" + ex.getMessage());
-            ex.printStackTrace();
-            System.exit(1);
+            System.err.println("Помилка при додаванні замовлення в базу даних: " + ex.getMessage());
         }
     }
-
-
 }

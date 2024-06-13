@@ -97,7 +97,7 @@ public class Regular {
         return st.substring(startIndex, endIndex + 1);
     }
 
-    private static String findAttributes(String patternClass) {
+    public static String findAttributes(String patternClass) {
         attr = new ArrayList<>();
         attrName = new ArrayList<>();
 
@@ -116,7 +116,7 @@ public class Regular {
         return mt.replaceAll("");
     }
 
-    private static void findConstructors(String patternClass) {
+    public static void findConstructors(String patternClass) {
         constr = new ArrayList<>();
 
         Pattern pt = Pattern.compile("(private\\s+|public\\s+|protected\\s+)?\\w+\\([^{}]*\\)\\s*\\{");

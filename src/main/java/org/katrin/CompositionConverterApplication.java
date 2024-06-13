@@ -54,9 +54,7 @@ public class CompositionConverterApplication extends JFrame {
     private JTextArea classDetailsArea;
     int selectedClassIndex;
     int accessType = 1;
-    boolean isAccess = false;
     int convertedClassId = 0;
-
     LocalDateTime checkoutDate;
     Client client;
 
@@ -66,19 +64,11 @@ public class CompositionConverterApplication extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new GridBagLayout());
 
-//        try {
-//            Image icon = ImageIO.read(Objects.requireNonNull(getClass().getResource("src/icon.png")));
-//            if (icon != null) {
-//                setIconImage(icon);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            System.err.println("Failed to load icon image.");
-//        }
+        ImageIcon icon = new ImageIcon(Objects.requireNonNull(CompositionConverterApplication.class.getResource("/icon.png")));
+        setIconImage(icon.getImage());
 
         getContentPane().setBackground(lightBlue);
         userAuthorization();
-
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
@@ -162,7 +152,7 @@ public class CompositionConverterApplication extends JFrame {
                 return;
             }
             int clientId = repository.addClient(client);
-            client.builder().id(clientId).build();
+            client.setId(clientId);
             choosePurchaseType();
         });
     }
@@ -239,8 +229,6 @@ public class CompositionConverterApplication extends JFrame {
         convertedInnerClassCode = Analysis.analyzePattern(selectedIndexes, editLabel);
         outerClassName = outerClassNameField.getText();
 
-        //confirmAccess();
-
         int outerClassId = 0;
         int initialInnerClassId;
 
@@ -277,40 +265,6 @@ public class CompositionConverterApplication extends JFrame {
         orderExecution(convertedInnerClassCode);
     }
 
-    public void confirmAccess() {
-        clearWindow();
-        setSize(450, 220);
-        writeTitle();
-        writeLabel("Чи дозволяєте ви нам використовувати свій конвертований клас?", 0, 1, 4, 10, 10, customFont1, darkBlue);
-
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        JButton hasInnerButton = new JButton("Так");
-        hasInnerButton.setPreferredSize(new Dimension(180, 25));
-        add(hasInnerButton, gbc);
-        hasInnerButton.setBackground(Color.WHITE);
-        hasInnerButton.setForeground(darkBlue);
-        hasInnerButton.setFont(customFont1);
-
-        JButton noInnerButton = new JButton("Ні");
-        gbc.gridx = 2;
-        noInnerButton.setPreferredSize(new Dimension(180, 25));
-        add(noInnerButton, gbc);
-        noInnerButton.setBackground(Color.WHITE);
-        noInnerButton.setForeground(darkBlue);
-        noInnerButton.setFont(customFont1);
-
-        hasInnerButton.addActionListener(e -> {
-            accessType = 1;
-            isAccess = true;
-        });
-
-        noInnerButton.addActionListener(e -> {
-            accessType = 2;
-            isAccess = true;
-        });
-    }
-
     public void hasInner() {
         clearWindow();
         setSize(450, 220);
@@ -325,19 +279,19 @@ public class CompositionConverterApplication extends JFrame {
         downloadInnerClassButton.setForeground(darkBlue);
         downloadInnerClassButton.setFont(customFont1);
 
-        // Добавление обработчика на кнопку
+        // Додавання оброблювача на кнопку
         downloadInnerClassButton.addActionListener(el -> {
-            // Создание объекта JFileChooser
+            // Створення об'єкта JFileChooser
             JFileChooser fileChooser = new JFileChooser();
-            // Открываем диалог выбора файла
+            // Відкриваємо діалог вибору файлу
             int result = fileChooser.showOpenDialog(CompositionConverterApplication.this);
 
-            // Проверка, был ли выбран файл
+            // Перевірка, чи вибрано файл
             if (result == JFileChooser.APPROVE_OPTION) {
-                // Получаем выбранный файл
+                // Отримуємо вибраний файл
                 File selectedFile = fileChooser.getSelectedFile();
                 try {
-                    // Читаем содержимое файла
+                    // Читаємо вміст файлу
                     BufferedReader reader = new BufferedReader(new FileReader(selectedFile));
                     StringBuilder content = new StringBuilder();
                     String line;
@@ -513,7 +467,7 @@ public class CompositionConverterApplication extends JFrame {
             continueButton.addActionListener(e1 -> convertingClassWhenNoInner());
             add(continueButton, gbc);
 
-            selectedClassIndex = selectedClass.getId();  // Сохранение индекса выбранного класса
+            selectedClassIndex = selectedClass.getId();  // Збереження індексу обраного класу
         });
     }
 
@@ -549,18 +503,18 @@ public class CompositionConverterApplication extends JFrame {
         writeLabel(Regular.className, 2, 1, 2, 10, 150, customFont3, Color.black);
         writeLabel("Оберіть корисні атрибути зі списку, які хочете зберегти:", 0, 2, 4, 10, 10, customFont3, Color.black);
 
-        // Настройка модели списка
+        // Налаштування моделі списку
         listModel = new DefaultListModel<>();
-        // Добавление атрибутов из существующего списка Regular.attr
+        // Додавання атрибутів із існуючого списку Regular.attr
         for (String attribute : Regular.attr) {
             listModel.addElement(attribute);
         }
 
-        // Создание JList с использованием модели
+        // Створення JList із використанням моделі
         attributeList = new JList<>(listModel);
         attributeList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        // Создание JScrollPane для списка атрибутов
+        // Створення JScrollPane для списку атрибутів
         JScrollPane scrollPane = new JScrollPane(attributeList);
         scrollPane.setPreferredSize(new Dimension(350, 150));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -573,19 +527,18 @@ public class CompositionConverterApplication extends JFrame {
         okButton.setFont(customFont1);
 
         okButton.addActionListener(e -> {
-            // Обработка выбранных атрибутов
+            // Опрацювання обраних атрибутів
             selectedIndexes.add(attributeList.getSelectedIndex());
 
             for (int index : selectedIndexes) {
                 String attribute = listModel.getElementAt(index);
-                // Проверяем, не выбран ли атрибут ранее
+                // Перевіряємо, чи був він обраний раніше
                 selectedAttributesSet.add(attribute);
             }
-            // Устанавливаем кастомный рендерер для блокировки отображения выбранных атрибутов
+            // Встановлюємо кастомний рендерер для блокування відображення вибраних атрибутів
             attributeList.setCellRenderer(new DisabledItemRenderer(selectedAttributesSet));
         });
 
-        // Добавление кнопки на форму
         gbc.gridy = 4;
         add(okButton, gbc);
 
