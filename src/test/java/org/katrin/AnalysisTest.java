@@ -2,10 +2,8 @@ package org.katrin;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
-
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
 class AnalysisTest {
     @Test

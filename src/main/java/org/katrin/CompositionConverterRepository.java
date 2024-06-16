@@ -39,7 +39,6 @@ public class CompositionConverterRepository {
 
     public Client findClient(String contact_data, String user_password, CompositionConverterApplication appl) {
         String s = "SELECT * FROM client WHERE contact_data = ? AND user_password = ?";
-
         try (PreparedStatement statement = connection.prepareStatement(s)) {
 
             statement.setString(1, contact_data);

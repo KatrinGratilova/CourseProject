@@ -1,7 +1,6 @@
 package org.katrin;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +23,7 @@ class RegularTest1 {
                 }
                 """;
     }
+
     @Test
     void testShowPattern() {
         String actual = Regular.showPattern(classText);
@@ -45,11 +45,17 @@ class RegularTest1 {
         // Перевірка, чи правильно відображено атрибути, методи та конструктори
         assertEquals(expected.trim(), actual.trim());
 
-        // Перевірка, чи правильно відображено атрибути та їх імена
+        // Перевірка, чи правильно збережено в списки атрибути та їх імена, методи, конструктори
         assertTrue(Regular.attr.contains("private String name;"));
         assertTrue(Regular.attr.contains("private int age;"));
         assertTrue(Regular.attrName.contains("name"));
         assertTrue(Regular.attrName.contains("age"));
+        assertTrue(Regular.meth.contains("public void setName(String name) {\n" +
+                "        this.name = name;\n" +
+                "    }"));
+        assertTrue(Regular.constr.contains("public TestClass() {\n" +
+                "        this.age = 0;\n" +
+                "    }"));
     }
 
     @Test
@@ -94,6 +100,4 @@ class RegularTest1 {
         assertEquals(1, Regular.constr.size());
         assertEquals("public TestClass() {}", Regular.constr.get(0));
     }
-
-
 }

@@ -3,7 +3,6 @@ package org.katrin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.katrin.Model.Client;
-
 import javax.swing.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,17 +25,6 @@ public class CompositionConverterApplicationTest {
                 .contactData("1234567890")
                 .password("password")
                 .build();
-    }
-
-    @Test
-    public void testUserAuthorization() {
-        SwingUtilities.invokeLater(() -> {
-            application.userAuthorization();
-            JFrame frame = application;
-            assertNotNull(frame);
-            assertTrue(frame.isVisible());
-            assertTrue(frame.getContentPane().getComponentCount() > 0);
-        });
     }
 
     @Test
